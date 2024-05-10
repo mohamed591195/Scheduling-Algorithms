@@ -69,7 +69,7 @@ def DMA(tasks, max_time):
 
         # sort the tasks based on their deadlines
     output = []
-    deadline_broken = False
+    deadline_missed = 0
     # sort the tasks based on their deadlines
     task_values.sort(key=lambda x: x["deadline"])
     # assign priorities to the tasks based on their deadlines
@@ -91,11 +91,7 @@ def DMA(tasks, max_time):
                 new_task["release_time"] = time
                 new_task["deadline"] = task["deadline"] + task["period"]
                 task_values.append(new_task)
-            # if the deadline broken
-            if task["deadline"] < time:
-                deadline_broken = True
-                # task_values.remove(task)
-
+        
             # get the task with the highest priority that is ready to be executed
             if time >= task["release_time"]:
                 if task["priority"] < ready_task["priority"]:
@@ -123,7 +119,11 @@ def DMA(tasks, max_time):
                     task_priods.append([task[1], task[2]])
             result[ts["task_id"]] = task_priods
 
-    return result, deadline_broken
+        if time > ready_task["deadline"]:
+            deadline_missed = ready_task["deadline"]
+            break
+
+    return result, deadline_missed
 
 
 # RMA Scheduler
@@ -138,7 +138,7 @@ def RMA(tasks, max_time):
 
         # sort the tasks based on their deadlines
     output = []
-    deadline_broken = False
+    deadline_missed = 0
     time = 0
     task_values.sort(key=lambda x: x["period"])
     for i, task in enumerate(task_values):
@@ -158,9 +158,9 @@ def RMA(tasks, max_time):
                 new_task["deadline"] = task["deadline"] + task["period"]
 
                 task_values.append(new_task)
-            if task["deadline"] < time:
-                deadline_broken = True
-                # task_values.remove(task)
+            # if task["deadline"] < time:
+            #     deadline_broken = True
+            #     # task_values.remove(task)
 
             if time >= task["release_time"]:
                 if task["priority"] < ready_task["priority"]:
@@ -185,8 +185,13 @@ def RMA(tasks, max_time):
                 if task[0] == ts["task_id"]:
                     task_priods.append([task[1], task[2]])
             result[ts["task_id"]] = task_priods
+            
+        if time > ready_task["deadline"]:
+            deadline_missed = ready_task["deadline"]
+            break
+    
 
-    return result, deadline_broken
+    return result, deadline_missed
 
 
 def FIFO(tasks, max_time):
