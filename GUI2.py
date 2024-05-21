@@ -41,14 +41,14 @@ class TaskSchedulerGUI:
         #set plicy_dropdown read only
         self.policy_dropdown.config(state="readonly")
 
-         # Create labels for maximum time and slot
+         # Create labels for maximum time and quantum_time
         self.max_time_label = tk.Label(master, text="Maximum Time:", font=self.font)
         self.max_time_entry = tk.Entry(master, **self.entry_style)
         self.max_time_entry.insert(0, "30")
 
-        self.slot_label = tk.Label(master, text="Slot:", font=self.font)
-        self.slot_entry = tk.Entry(master, **self.entry_style)
-        self.slot_entry.insert(0, "1")
+        self.quantum_time_label = tk.Label(master, text="Quantum Time:", font=self.font)
+        self.quantum_time_entry = tk.Entry(master, **self.entry_style)
+        self.quantum_time_entry.insert(0, "1")
 
         self.notice_label = tk.Label(master, text="Note: priority fields are only for (preemptive and non-preemptive)", font=self.font, bg="#FFFB92")
         
@@ -64,8 +64,8 @@ class TaskSchedulerGUI:
         self.max_time_label.place(x=270, y=100)
         self.max_time_entry.place(x=500, y=100)
         
-        self.slot_label.place(x=620, y=100)
-        self.slot_entry.place(x=670, y=100)
+        self.quantum_time_label.place(x=620, y=100)
+        self.quantum_time_entry.place(x=760, y=100)
         
         # self.notice_label.place(x=270, y=135)
         self.generate_button.place(x=470, y=170)
@@ -121,6 +121,7 @@ class TaskSchedulerGUI:
     def draw_graph(self):
         # Initialize an empty list to store the task values
         tasks = {}
+        tasksRR = {}
     
         # Loop through each task frame
         for idx, task_frame in enumerate(self.task_frames):
@@ -128,23 +129,33 @@ class TaskSchedulerGUI:
             release_time = int(task_frame.release_time_entry.get())
             period = int(task_frame.period_entry.get())
             priority = int(task_frame.priority_entry.get())
-            execution_time = int(task_frame.execution_time_entry.get())
+            execution_time = task_frame.execution_time_entry.get()
             deadline = int(task_frame.deadline_entry.get())
+      
     
             # Store the values in a dictionary and add it to the list
             tasks[f'Task {idx}'] = {
                 'release_time': release_time,
                 'period': period,
                 'priority': priority,
-                'execution_time': execution_time,
+                'execution_time': float(execution_time),
                 'deadline': deadline
+            }
+            tasksRR[f'Task {idx}'] = {
+                'release_time': task_frame.release_time_entry.get(),
+                'period': task_frame.period_entry.get(),
+                'priority': task_frame.priority_entry.get(),
+                'execution_time': task_frame.execution_time_entry.get(),
+                'deadline': task_frame.deadline_entry.get()
             }
 
         # Get the scheduling policy value
         policy = self.policy_var.get()
-        # Get the maximum time and slot values
+        # Get the maximum time and quantum_time values
         max_time = int(self.max_time_entry.get())
-        slot = int(self.slot_entry.get())
+        quantum_time = self.quantum_time_entry.get()
+        print("quantum_time", quantum_time)
+        print("execution_time", execution_time)
 
         # Print the values for testing
         print(tasks)
@@ -152,7 +163,7 @@ class TaskSchedulerGUI:
             print(tasks, max_time)
             draw_tasks(*FIFO(tasks, max_time))
         elif policy == "RR":
-            draw_tasks(*RR(tasks, max_time, slot))
+            draw_tasks(*RR(tasksRR, max_time, quantum_time))
         elif policy == "EDF":
             draw_tasks(*EDF(tasks, max_time))
         elif policy == "MLF":

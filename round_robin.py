@@ -33,7 +33,34 @@ output :
 
 '''
 
-def RR(tasks, maximum_time, quantum_time):
+def calc_num_of_digit_after_period(num_as_string):
+    # calculate split by . and return size of second part if no . in string return 0 otherwise return len of digits of second index 
+    
+    if len(num_as_string.split("."))==2:
+        return len(num_as_string.split(".")[1])
+    return 0
+
+def apply_scale(num_as_string, scale):
+    if len(num_as_string.split("."))==1:
+        return int(num_as_string + '0' * scale)
+    decimal, fractional = num_as_string.split(".")
+    
+    remain_scale = scale - len(fractional)
+    
+    return int(decimal+fractional+'0'*remain_scale)
+
+def rescale(tasks, scale):
+    tasks_after_rescaling = {}
+    for task_id, durations in tasks.items():
+        tasks_after_rescaling[task_id]=[]
+        
+        for start, end in durations:
+            tasks_after_rescaling[task_id].append([start/(scale*1.0), end/(scale*1.0)])
+            
+    return tasks_after_rescaling
+
+    
+def RR(tasks, maximum_time, quantum_time_string):
     
     '''
     reformat input to queue of tasks with format : [
@@ -48,24 +75,40 @@ def RR(tasks, maximum_time, quantum_time):
                                                     priority
                                                 ]
     '''
-
+    
     if len(tasks) == 0:
         return []
-
+    # find scaling factor by iterate over all tasks and quantum time to find maximum digit after . and multiply tasks and quantum by 10^max 
+    max_digit_after_period = calc_num_of_digit_after_period(quantum_time_string)
+    
+    for task_id, task in tasks.items():
+        max_digit_after_period = max(max_digit_after_period, calc_num_of_digit_after_period(task['release_time']))
+        max_digit_after_period = max(max_digit_after_period, calc_num_of_digit_after_period(task['execution_time']))
+        max_digit_after_period = max(max_digit_after_period, calc_num_of_digit_after_period(task['period']))
+        max_digit_after_period = max(max_digit_after_period, calc_num_of_digit_after_period(task['deadline']))
+            
+    scale = 10**max_digit_after_period 
+    
+    quantum_time = apply_scale(quantum_time_string, max_digit_after_period)
+    # print("\n================================")
+    # print(scale)
+    
     queue_of_tasks = []
 
     for task_id, task in tasks.items():
         queue_of_tasks.append({
             'task_id': task_id,
-            'release_time': task['release_time'],
-            'execution_time': task['execution_time'],
-            'period': task['period'],
-            'deadline': task['deadline'],
-            'start_time': task['release_time'],
-            'remain_to_execute': task['execution_time']-min(quantum_time, task['execution_time']),
-            'current_to_execute': min(quantum_time, task['execution_time']),
-            'priority': task['priority']
+            'release_time': apply_scale(task['release_time'], max_digit_after_period),
+            'execution_time': apply_scale(task['execution_time'], max_digit_after_period),
+            'period': apply_scale(task['period'], max_digit_after_period),
+            'deadline': apply_scale(task['deadline'], max_digit_after_period),
+            'start_time': apply_scale(task['release_time'], max_digit_after_period),
+            'remain_to_execute': apply_scale(task['execution_time'], max_digit_after_period)-min(quantum_time, apply_scale(task['execution_time'], max_digit_after_period)),
+            'current_to_execute': min(quantum_time, apply_scale(task['execution_time'], max_digit_after_period)),
+            'priority': int(task['priority'])
         })
+        # print(scale)
+        # print(queue_of_tasks[-1])
 
     current_time = 0
 
@@ -75,7 +118,7 @@ def RR(tasks, maximum_time, quantum_time):
     broken_times = [] # contain times
     time_broken = 0
     
-    while current_time < maximum_time:
+    while current_time < maximum_time * scale:
 
         # pick first highest priority(low number of priority) task that start time <= current time
         index = -1
@@ -97,10 +140,10 @@ def RR(tasks, maximum_time, quantum_time):
                 tasks_after_processing[task_id] = []
                 
                 # access last element with key task_id
-            # if len(tasks_after_processing[task_id])!=0 and tasks_after_processing.get(task_id)[-1][-1] == current_time - 1:
-            #     tasks_after_processing[task_id][-1][-1] = current_time
-            # else:
-            tasks_after_processing[task_id].append([current_time - 1, current_time])
+            if len(tasks_after_processing[task_id])!=0 and tasks_after_processing.get(task_id)[-1][-1] == current_time - 1:
+                tasks_after_processing[task_id][-1][-1] = current_time
+            else:
+                tasks_after_processing[task_id].append([current_time - 1, current_time])
             
             
             if queue_of_tasks[index]['current_to_execute'] == 0:
@@ -112,35 +155,40 @@ def RR(tasks, maximum_time, quantum_time):
             time_broken = current_time
             break
 
-    return tasks_after_processing, time_broken
+    tasks_after_rescaling = rescale(tasks_after_processing, scale)
+    return tasks_after_rescaling, time_broken
 
 
-# tasks = {
-#     'Task 1': {
-#         'release_time': 0,
-#         'period': 6,
-#         'priority': 1,
-#         'execution_time': 2,
-#         'deadline': 6
-#     },
-#     'Task 2': {
-#         'release_time': 1,
-#         'period': 8,
-#         'priority': 0,
-#         'execution_time': 2,
-#         'deadline': 8
-#     },
-#     'Task 3': {
-#         'release_time': 2,
-#         'period': 15,
-#         'priority': 2,
-#         'execution_time': 4,
-#         'deadline': 15
-#     }
-# }
+tasks = {
+    'Task 1': {
+        'release_time': '0',
+        'period': '6',
+        'priority': '0',
+        'execution_time': '2',
+        'deadline': '6'
+    },
+    'Task 2': {
+        'release_time': '1',
+        'period': '8',
+        'priority': '0',
+        'execution_time': '2',
+        'deadline': '8'
+    },
+    'Task 3': {
+        'release_time': '2',
+        'period': '15',
+        'priority': '0',
+        'execution_time': '4',
+        'deadline': '15'
+    }
+}
 
 
 ## process tasks with round robin 
 # from drawing import draw_tasks
 
-# draw_tasks(*RR(tasks, 20, 2))
+# draw_tasks(*RR(tasks, 28, '0.25'))
+
+# tasks_after_processing, broken = RR(tasks, 28, '0.25')
+
+# print(tasks_after_processing)
