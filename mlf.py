@@ -109,33 +109,33 @@ def MLF(tasks, maximum_time):
     return tasks_after_processing, time_broken
 
 
-# tasks = {
-#     'Task 1': {
-#         'release_time': 0,
-#         'period': 6,
-#         'priority': 1,
-#         'execution_time': 2,
-#         'deadline': 6
-#     },
-#     'Task 2': {
-#         'release_time': 1,
-#         'period': 8,
-#         'priority': 0,
-#         'execution_time': 2,
-#         'deadline': 8
-#     },
-#     'Task 3': {
-#         'release_time': 2,
-#         'period': 15,
-#         'priority': 2,
-#         'execution_time': 4,
-#         'deadline': 15
-#     }
-# }
+tasks = {
+    'Task 1': {
+        'release_time': 0,
+        'period': 6,
+        'priority': 1,
+        'execution_time': 2,
+        'deadline': 6
+    },
+    'Task 2': {
+        'release_time': 1,
+        'period': 8,
+        'priority': 0,
+        'execution_time': 2,
+        'deadline': 8
+    },
+    'Task 3': {
+        'release_time': 2,
+        'period': 15,
+        'priority': 2,
+        'execution_time': 4,
+        'deadline': 15
+    }
+}
 
 # from drawing import draw_tasks
-
-# draw_tasks(*MLF(tasks, 10))
+#
+# draw_tasks(*MLF(tasks, 28))
 
 
 
